@@ -9,10 +9,10 @@ class Pokemon:
         self.name: str = name
         self.number: str = number
         self.primary_type: str = primary_type
-        self.secondary_type: str = secondary_type
+        self.secondary_type: str | None = secondary_type
         self.generation: str = generation
-        self.region: bool = region
-        self.mega: bool = mega
+        self.region: str | None = region
+        self.mega: bool | None = mega
         self.alternate_forms: list[str] = alternate_forms
 
     def __str__(self):
@@ -82,7 +82,8 @@ def process_data(pokedex_csv):
                             # Primary and secondary types match
 
                     else:
-                        print(f'{pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] has alternate form {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
+                        print(f'{pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type},
+                        {pokemon_list[pokdex_num].secondary_type}] has alternate form {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
                     """
 
             # New Pokemon
@@ -108,7 +109,7 @@ def main() -> None:
     # Sourced from https://www.kaggle.com/datasets/takamasakato/pokemon-all-status-data/data
     input_path = "data/Pokedex_Ver_SV2a.csv"
     additional_data_path = "data/pokedex_data_1011-1025.json"
-    output_path = "pokemon_list.json"
+    output_path = "shared/pokemon_list.json"
 
     pokedex_data = process_data(pokedex_csv=os.path.join(dir, input_path))
 

@@ -74,5 +74,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# Custom
+# macOS
 .DS_STORE
+
+# Project
+**/pokemon_cards
