@@ -78,4 +78,4 @@ venv.bak/
 .DS_STORE
 
 # Project
-**/pokemon_cards
+**/scraping/*/
