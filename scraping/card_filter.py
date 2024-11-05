@@ -32,7 +32,7 @@ def crop_pokemon(pokemon_name, pokemon_number):
 
 
 def main() -> None:
-    start_at = 896
+    start_at = 0
     end_at = 1026
     pokemon_data = get_pokedex()
 
