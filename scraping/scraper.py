@@ -11,8 +11,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 
+
 # Creates directories relative to the file path
-def create_directory(directory: str, base = False) -> str:
+def create_directory(directory: str, base=False) -> str:
     directory_path: str = os.path.join(dir, directory) if not base else directory
 
     # Create folder to save images if it doesn't exist
@@ -20,6 +21,7 @@ def create_directory(directory: str, base = False) -> str:
         os.makedirs(directory_path)
 
     return directory_path
+
 
 # Initializes a Chrome driver that can be reused
 def initialize_driver() -> WebDriver:
@@ -34,7 +36,7 @@ def initialize_driver() -> WebDriver:
     return driver
 
 
-def scrape_images(url: str, output_directory: str, image_name: str, element_name: str, element_by_id: bool = True, driver = None) -> None:
+def scrape_images(url: str, output_directory: str, image_name: str, element_name: str, element_by_id: bool = True, driver=None) -> None:
     if driver is None:
         driver: WebDriver = initialize_driver()
 
