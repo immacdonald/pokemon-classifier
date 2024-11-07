@@ -55,21 +55,20 @@ def create_type_directories():
 
 
 def main() -> None:
-    start_at = 2
+    start_at = 0
     end_at = 1026
-    pokemon_data = get_pokedex()
+    pokemon_data = get_pokedex(True)
 
     directories = create_type_directories()
 
     basepath = os.path.join(os.path.abspath(os.path.join(dir, "..")), "scraping/data")
 
     for pokemon in pokemon_data:
-        pokemon_number: str = pokemon.get("number")
+        pokemon_number: int = int(pokemon.get("number"))
 
-        if int(pokemon_number) >= start_at and int(pokemon_number) <= end_at:
-            if not (pokemon.get("mega") or pokemon.get("region")):
-                add_to_dataset(os.path.join(basepath, "bulbapedia"), directories, pokemon)
-                add_to_dataset(os.path.join(basepath, "pokemon_cards"), directories, pokemon, file_suffix="_card")
+        if pokemon_number >= start_at and pokemon_number <= end_at:
+            add_to_dataset(os.path.join(basepath, "bulbapedia"), directories, pokemon)
+            add_to_dataset(os.path.join(basepath, "pokemon_cards"), directories, pokemon, file_suffix="_card")
 
 
 if __name__ == "__main__":
