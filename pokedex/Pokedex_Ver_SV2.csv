@@ -591,13 +591,13 @@ No,Branch_Code,Original_Name,Name,Generation,Height,Weight,Type1,Type2,Ability1,
 480,480_0,Uxie,Uxie,4,0.3,0.3,Psychic,,Levitate,,,Yellow,0,0,100,80,Undiscovered,,3,290,1250000,Semi-Legendary,,,75,75,130,75,130,95,580,0,0,2,0,1,0
 481,481_0,Mesprit,Mesprit,4,0.3,0.3,Psychic,,Levitate,,,Pink,0,0,100,80,Undiscovered,,3,290,1250000,Semi-Legendary,,,80,105,105,105,105,80,580,0,1,0,1,1,0
 482,482_0,Azelf,Azelf,4,0.3,0.3,Psychic,,Levitate,,,Blue,0,0,100,80,Undiscovered,,3,290,1250000,Semi-Legendary,,,75,125,70,125,70,115,580,0,2,0,1,0,0
-483,483_0,Dialga,Dialga,4,5.4,683,Steel,Dragon,Pressure,,Telepathy,White,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,100,120,120,150,100,90,680,0,0,0,3,0,0
+483,483_0,Dialga,Dialga Altered Form,4,5.4,683,Steel,Dragon,Pressure,,Telepathy,White,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,100,120,120,150,100,90,680,0,0,0,3,0,0
 483,483_1,Dialga,Dialga Origin Form,4,7,850,Steel,Dragon,Pressure,,Telepathy,White,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,100,100,120,150,120,90,680,0,0,0,3,0,0
-484,484_0,Palkia,Palkia,4,4.2,336,Water,Dragon,Pressure,,Telepathy,Purple,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,90,120,100,150,120,100,680,0,0,0,3,0,0
+484,484_0,Palkia,Palkia Altered Form,4,4.2,336,Water,Dragon,Pressure,,Telepathy,Purple,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,90,120,100,150,120,100,680,0,0,0,3,0,0
 484,484_1,Palkia,Palkia Origin Form,4,6.3,660,Water,Dragon,Pressure,,Telepathy,Purple,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,90,100,100,150,120,120,680,0,0,0,3,0,0
 485,485_0,Heatran,Heatran,4,1.7,430,Fire,Steel,Flash Fire,,Flame Body,Brown,50,50,0,10,Undiscovered,,3,300,1250000,Semi-Legendary,,,91,90,106,130,106,77,600,0,0,0,3,0,0
 486,486_0,Regigigas,Regigigas,4,3.7,420,Normal,,Slow Start,,,White,0,0,100,120,Undiscovered,,3,335,1250000,Semi-Legendary,,,110,160,110,80,110,100,670,0,3,0,0,0,0
-487,487_0,Giratina,Giratina,4,4.5,750,Ghost,Dragon,Pressure,,Telepathy,Black,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,150,100,120,100,120,90,680,3,0,0,0,0,0
+487,487_0,Giratina,Giratina Altered Form,4,4.5,750,Ghost,Dragon,Pressure,,Telepathy,Black,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,150,100,120,100,120,90,680,3,0,0,0,0,0
 487,487_1,Giratina,Giratina Origin Form,4,6.9,650,Ghost,Dragon,Levitate,,,Black,0,0,100,120,Undiscovered,,3,340,1250000,Legendary,,,150,120,100,120,100,90,680,3,0,0,0,0,0
 488,488_0,Cresselia,Cresselia,4,1.5,85.6,Psychic,,Levitate,,,Yellow,0,100,0,120,Undiscovered,,3,290,1250000,Semi-Legendary,,,120,70,110,75,120,85,580,0,0,0,0,3,0
 489,489_0,Phione,Phione,4,0.4,3.1,Water,,Hydration,,,Blue,0,0,100,40,Water1,Fairy,30,216,1250000,Mythical,,,80,80,80,80,80,80,480,1,0,0,0,0,0
@@ -894,10 +894,11 @@ No,Branch_Code,Original_Name,Name,Generation,Height,Weight,Type1,Type2,Ability1,
 738,738_0,Vikavolt,Vikavolt,7,1.5,45,Bug,Electric,Levitate,,,Blue,50,50,0,15,Bug,,45,250,1000000,Ordinary,,,77,70,90,145,75,43,500,0,0,0,3,0,0
 739,739_0,Crabrawler,Crabrawler,7,0.6,7,Fighting,,Hyper Cutter,Iron Fist,Anger Point,Purple,50,50,0,20,Water3,,225,68,1000000,Ordinary,,,47,82,57,42,47,63,338,0,1,0,0,0,0
 740,740_0,Crabominable,Crabominable,7,1.7,180,Fighting,Ice,Hyper Cutter,Iron Fist,Anger Point,White,50,50,0,20,Water3,,60,167,1000000,Ordinary,,,97,132,77,62,67,43,478,0,2,0,0,0,0
-741,741_0,Oricorio,Oricorio Baile Style,7,0.6,3.4,Fire,Flying,Dancer,,,Red,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
-741,741_1,Oricorio,Oricorio Pom-Pom Style,7,0.6,3.4,Electric,Flying,Dancer,,,Yellow,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
-741,741_2,Oricorio,Oricorio Pa'u Style,7,0.6,3.4,Psychic,Flying,Dancer,,,Pink,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
-741,741_3,Oricorio,Oricorio Sensu Style,7,0.6,3.4,Ghost,Flying,Dancer,,,Purple,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
+741,741_0,Oricorio,Oricorio,7,,,Flying,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+741,741_1,Oricorio,Oricorio Baile Style,7,0.6,3.4,Fire,Flying,Dancer,,,Red,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
+741,741_2,Oricorio,Oricorio Pom-Pom Style,7,0.6,3.4,Electric,Flying,Dancer,,,Yellow,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
+741,741_3,Oricorio,Oricorio Pa'u Style,7,0.6,3.4,Psychic,Flying,Dancer,,,Pink,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
+741,741_4,Oricorio,Oricorio Sensu Style,7,0.6,3.4,Ghost,Flying,Dancer,,,Purple,25,75,0,20,Flying,,45,167,1000000,Ordinary,,,75,70,70,98,70,93,476,0,0,0,2,0,0
 742,742_0,Cutiefly,Cutiefly,7,0.1,0.2,Bug,Fairy,Honey Gather,Shield Dust,Sweet Veil,Yellow,50,50,0,20,Bug,Fairy,190,61,1000000,Ordinary,,,40,45,40,55,40,84,304,0,0,0,0,0,1
 743,743_0,Ribombee,Ribombee,7,0.2,0.5,Bug,Fairy,Honey Gather,Shield Dust,Sweet Veil,Yellow,50,50,0,20,Bug,Fairy,75,162,1000000,Ordinary,,,60,55,60,95,70,124,464,0,0,0,0,0,2
 744,744_0,Rockruff,Rockruff,7,0.5,9.2,Rock,,Keen Eye,Vital Spirit,Steadfast,Brown,50,50,0,15,Ground,,190,56,1000000,Ordinary,,,45,65,40,30,40,60,280,0,1,0,0,0,0
@@ -1202,3 +1203,18 @@ No,Branch_Code,Original_Name,Name,Generation,Height,Weight,Type1,Type2,Ability1,
 1008,1008_0,Miraidon,Miraidon,9,3.5,240,Electric,Dragon,Hadron Engine,,,Blue,0,0,100,50,Undiscovered,,3,335,1250000,Legendary,,,100,85,100,135,115,135,670,0,0,0,3,0,0
 1009,1009_0,Walking Wake,Walking Wake,9,3.5,280,Water,Dragon,Protosynthesis,,,Blue,0,0,100,50,Undiscovered,,5,295,1250000,Semi-Legendary,,,99,83,91,125,83,109,590,0,0,0,3,0,0
 1010,1010_0,Iron Leaves,Iron Leaves,9,1.5,125,Grass,Psychic,Quark Drive,,,Green,0,0,100,50,Undiscovered,,5,295,1250000,Semi-Legendary,,,90,130,88,70,108,104,590,0,3,0,0,0,0
+1011,1011_0,Dipplin,Dipplin,9,,,Grass,Dragon,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1012,1012_0,Poltchageist,Poltchageist,9,,,Grass,Ghost,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1013,1013_0,Sinistcha,Sinistcha,9,,,Grass,Ghost,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1014,1014_0,Okidogi,Okidogi,9,,,Poison,Fighting,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1015,1015_0,Munkidori,Munkidori,9,,,Poison,Psychic,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1016,1016_0,Fezandipiti,Fezandipiti,9,,,Poison,Fairy,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1017,1017_0,Ogerpon,Ogerpon,9,,,Grass,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1018,1018_0,Archaludon,Archaludon,9,,,Steel,Dragon,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1019,1019_0,Hydrapple,Hydrapple,9,,,Grass,Dragon,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1020,1020_0,Gouging Fire,Gouging Fire,9,,,Fire,Dragon,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1021,1021_0,Raging Bolt,Raging Bolt,9,,,Electric,Dragon,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1022,1022_0,Iron Boulder,Iron Boulder,9,,,Rock,Psychic,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1023,1023_0,Iron Crown,Iron Crown,9,,,Steel,Psychic,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1024,1024_0,Terapagos,Terapagos,9,,,Normal,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+1025,1025_0,Pecharunt,Pecharunt,9,,,Poison,Ghost,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
