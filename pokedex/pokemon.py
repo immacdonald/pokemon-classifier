@@ -68,7 +68,7 @@ def validate_pokemon(data: list[dict]) -> list[PokemonData]:
 
 
 class Pokemon:
-    def __init__(self, name, number, primary_type, secondary_type, generation, region=None, mega=False, form=False, alternate_count=0, variants=[]):
+    def __init__(self, name, number, primary_type, secondary_type, generation, region=None, mega=False, form=False, alternate_count=0, variants=[]) -> None:
         """Initializes a new instance of the Pokemon class."""
         self.name: str = name
         self.number: str = number
@@ -81,16 +81,16 @@ class Pokemon:
         self.alternate_count: int = alternate_count
         self.variants: list[str] = variants
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Returns a string representation of the Pokemon."""
         types = f"{self.primary_type}"
         if self.secondary_type:
             types += f"/{self.secondary_type}"
         return f"{self.name} (#{self.number}): {types}"
 
-    def to_dict(self):
+    def to_dict(self) -> PokemonData:
         """Converts the Pokemon instance into a dictionary suitable for JSON serialization."""
-        obj = {
+        data: PokemonData = {
             "name": self.name,
             "number": self.number.split("_")[0],
             # ID is number-0 for non-alternate forms
@@ -101,21 +101,21 @@ class Pokemon:
         }
 
         if self.region:
-            obj["region"] = self.region
-            obj["is_alternate"] = True
+            data["region"] = self.region
+            data["is_alternate"] = True
 
         if self.mega:
-            obj["mega"] = self.mega
-            obj["is_alternate"] = True
+            data["mega"] = self.mega
+            data["is_alternate"] = True
 
         if self.form:
-            obj["form"] = self.form
-            obj["is_alternate"] = True
+            data["form"] = self.form
+            data["is_alternate"] = True
 
         if self.alternate_count > 0:
-            obj["alternate_count"] = self.alternate_count
+            data["alternate_count"] = self.alternate_count
 
         if (len(self.variants)) > 0:
-            obj["variants"] = self.variants
+            data["variants"] = self.variants
 
-        return obj
+        return data

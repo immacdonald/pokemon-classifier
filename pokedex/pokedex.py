@@ -10,7 +10,7 @@ def get_pokedex_data(standardize=False) -> list[PokemonData]:
 
     with open(os.path.join(dir, input_path), mode="r") as data_file:
         pokedex = json.load(data_file)
-        pokedex = validate_pokemon(pokedex)
+        pokedex: list[PokemonData] = validate_pokemon(pokedex)
 
         if standardize:
             pokedex = [pokemon for pokemon in pokedex if not (pokemon.get("mega") or pokemon.get("region"))]
@@ -19,8 +19,8 @@ def get_pokedex_data(standardize=False) -> list[PokemonData]:
 
 
 def get_pokedex(standardize=False) -> list[Pokemon]:
-    pokedex = get_pokedex_data(standardize)
-    pokemon_list = []
+    pokedex: list[PokemonData] = get_pokedex_data(standardize)
+    pokemon_list: list[Pokemon] = []
 
     for pokemon in pokedex:
         pokemon_list.append(
@@ -43,5 +43,5 @@ def get_pokedex(standardize=False) -> list[Pokemon]:
 
 
 # Organized based on the internal type ID used in Generation IX
-def get_types():
+def get_types() -> list[str]:
     return ["normal", "fighting", "flying", "poison", "ground", "rock", "bug", "ghost", "steel", "fire", "water", "grass", "electric", "psychic", "ice", "dragon", "dark", "fairy"]

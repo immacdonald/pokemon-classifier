@@ -2,6 +2,8 @@ import csv
 import json
 import os
 
+from pokedex.pokemon import PokemonData
+
 from .pokemon import Pokemon
 
 
@@ -78,9 +80,9 @@ def main() -> None:
     input_path = "Pokedex_Ver_SV2.csv"
     output_path = "updated_pokemon_list.json"
 
-    pokedex_data = compile_data(pokedex_csv=os.path.join(dir, input_path))
+    pokedex_data: dict[str, Pokemon] = compile_data(pokedex_csv=os.path.join(dir, input_path))
 
-    full_pokedex = [pokemon.to_dict() for pokemon in pokedex_data.values()]
+    full_pokedex: list[PokemonData] = [pokemon.to_dict() for pokemon in pokedex_data.values()]
 
     with open(file=os.path.join(dir, output_path), mode="w") as file:
         json.dump(full_pokedex, file, indent=4)
