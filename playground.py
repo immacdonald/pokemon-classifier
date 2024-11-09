@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 from pprint import pprint
 
-from shared.pokedex import get_pokedex
+from pokedex.pokedex import get_pokedex
 
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 

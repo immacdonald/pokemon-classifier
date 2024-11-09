@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+
 from .pokemon import Pokemon
 
 
@@ -12,29 +13,25 @@ def compile_data(pokedex_csv):
         # print(pokedex.fieldnames)
         for entry in pokedex:
             pokdex_num = str(entry["No"])
+            branch_code = str(entry["Branch_Code"].replace("_", "-"))
 
             # Pokemon already in dictionary (alternate form)
             if pokemon_list.get(pokdex_num):
                 pokemon = Pokemon(
                     name=entry["Name"],
-                    number=entry["Branch_Code"],
+                    number=branch_code,
                     primary_type=entry["Type1"],
                     secondary_type=entry["Type2"],
                     generation=entry["Generation"],
-                    region=False,
-                    mega=False,
-                    form=False,
-                    alternate_count=0,
-                    variants=[],
                 )
 
                 if entry["Mega_Evolution_Flag"]:
                     pokemon.mega = True
-                    pokemon_list[entry["Branch_Code"]] = pokemon
+                    pokemon_list[branch_code] = pokemon
                     pokemon_list[pokdex_num].alternate_count += 1
                 elif entry["Region_Form"]:
                     pokemon.region = entry["Region_Form"]
-                    pokemon_list[entry["Branch_Code"]] = pokemon
+                    pokemon_list[branch_code] = pokemon
                     pokemon_list[pokdex_num].alternate_count += 1
                 else:
                     if pokemon_list[pokdex_num].primary_type == entry["Type1"]:
@@ -42,23 +39,21 @@ def compile_data(pokedex_csv):
                         if pokemon_list[pokdex_num].secondary_type == entry["Type2"]:
                             # Primary and secondary types match
                             pokemon_list[pokdex_num].variants.append(entry["Name"])
-                            #print(f'Primary and secondary matches for {pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] and {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
+                            # print(f'Primary and secondary matches for {pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] and {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
                         else:
                             # Only primary types match so Pokemon is considered seperate
                             pokemon.form = True
-                            pokemon_list[entry["Branch_Code"]] = pokemon
+                            pokemon_list[branch_code] = pokemon
                             pokemon_list[pokdex_num].alternate_count += 1
-                            #print(f'Primary but not secondary matches for {pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] and {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
-
+                            # print(f'Primary but not secondary matches for {pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] and {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
 
                     else:
                         # Different types so Pokemon is considered seperate
                         pokemon.form = True
-                        pokemon_list[entry["Branch_Code"]] = pokemon
+                        pokemon_list[branch_code] = pokemon
                         pokemon_list[pokdex_num].alternate_count += 1
 
-                        #print(f'{pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] has alternate form with new types {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
-                    
+                        # print(f'{pokemon_list[pokdex_num].name} [{pokemon_list[pokdex_num].primary_type}, {pokemon_list[pokdex_num].secondary_type}] has alternate form with new types {entry["Name"]} [{entry["Type1"]}, {entry["Type2"]}]')
 
             # New Pokemon
             else:
@@ -68,10 +63,6 @@ def compile_data(pokedex_csv):
                     primary_type=entry["Type1"],
                     secondary_type=entry["Type2"],
                     generation=entry["Generation"],
-                    region=False,
-                    mega=False,
-                    form=False,
-                    alternate_count=0,
                     variants=[entry["Name"]] if entry["Original_Name"] != entry["Name"] else [],
                 )
 
