@@ -4,22 +4,24 @@ import os
 from .pokemon import Pokemon, PokemonData, validate_pokemon
 
 
-def get_pokedex_data(standardize=False) -> list[PokemonData]:
+def get_pokedex_data(standardize=False, start_at=0, end_at=2000) -> list[PokemonData]:
     dir = os.path.dirname(p=os.path.realpath(filename=__file__))
     input_path = "pokemon_list.json"
 
     with open(os.path.join(dir, input_path), mode="r") as data_file:
-        pokedex = json.load(data_file)
-        pokedex: list[PokemonData] = validate_pokemon(pokedex)
+        data = json.load(data_file)
+        pokedex: list[PokemonData] = validate_pokemon(data)
+
+        pokedex = [pokemon for pokemon in pokedex if int(pokemon.get("number")) >= start_at and int(pokemon.get("number")) <= end_at]
 
         if standardize:
-            pokedex = [pokemon for pokemon in pokedex if not (pokemon.get("mega") or pokemon.get("region"))]
+            pokedex = [pokemon for pokemon in pokedex if pokemon.get("standard")]
 
         return pokedex
 
 
-def get_pokedex(standardize=False) -> list[Pokemon]:
-    pokedex: list[PokemonData] = get_pokedex_data(standardize)
+def get_pokedex(standardize=False, start_at=0, end_at=2000) -> list[Pokemon]:
+    pokedex: list[PokemonData] = get_pokedex_data(standardize, start_at, end_at)
     pokemon_list: list[Pokemon] = []
 
     for pokemon in pokedex:
@@ -30,11 +32,10 @@ def get_pokedex(standardize=False) -> list[Pokemon]:
                 primary_type=pokemon.get("primary_type"),
                 secondary_type=pokemon.get("secondary_type"),
                 generation=pokemon.get("generation"),
-                region=pokemon.get("region"),
-                mega=pokemon.get("mega"),
-                form=pokemon.get("form"),
-                is_alternate=pokemon.get("is_alternate"),
-                alternate_count=pokemon.get("alternate_count"),
+                region=pokemon.get("region", None),
+                mega=pokemon.get("mega", False),
+                form=pokemon.get("form", False),
+                alternate_count=pokemon.get("alternate_count", 0),
                 variants=pokemon.get("variants", []),
             )
         )

@@ -8,10 +8,10 @@ class PokemonData(TypedDict):
     primary_type: str
     secondary_type: str | None
     generation: str
+    standard: bool
     region: NotRequired[str]
     mega: NotRequired[bool]
     form: NotRequired[bool]
-    is_alternate: NotRequired[bool]
     alternate_count: NotRequired[int]
     variants: NotRequired[list[str]]
 
@@ -38,6 +38,9 @@ def validate_pokemon(data: list[dict]) -> list[PokemonData]:
 
         if "generation" not in pokemon or not isinstance(pokemon["generation"], str):
             raise ValueError(f"Invalid 'generation' for {name}")
+        
+        if "standard" in pokemon and not isinstance(pokemon["standard"], bool):
+            raise ValueError(f"Invalid 'standard' for {name}")
 
         # Optional fields
         if "region" in pokemon and not isinstance(pokemon["region"], str):
@@ -48,9 +51,6 @@ def validate_pokemon(data: list[dict]) -> list[PokemonData]:
 
         if "form" in pokemon and not isinstance(pokemon["form"], bool):
             raise ValueError(f"Invalid 'form' for {name}")
-
-        if "is_alternate" in pokemon and not isinstance(pokemon["is_alternate"], bool):
-            raise ValueError(f"Invalid 'is_alternate' for {name}")
 
         if "alternate_count" in pokemon and not isinstance(pokemon["alternate_count"], int):
             raise ValueError(f"Invalid 'alternate_count' for {name}")
@@ -81,6 +81,10 @@ class Pokemon:
         self.alternate_count: int = alternate_count
         self.variants: list[str] = variants
 
+    @property
+    def standard(self) -> bool:
+        return False if (self.region or self.mega or self.form) else True
+
     def __str__(self) -> str:
         """Returns a string representation of the Pokemon."""
         types = f"{self.primary_type}"
@@ -92,25 +96,23 @@ class Pokemon:
         """Converts the Pokemon instance into a dictionary suitable for JSON serialization."""
         data: PokemonData = {
             "name": self.name,
-            "number": self.number.split("_")[0],
+            "number": self.number.split("-")[0],
             # ID is number-0 for non-alternate forms
-            "id": (self.number.replace("_", "-") if "_" in self.number else f"{self.number}-0"),
+            "id": (self.number if "-" in self.number else f"{self.number}-0"),
             "primary_type": self.primary_type,
             "secondary_type": self.secondary_type if self.secondary_type else None,
             "generation": self.generation,
+            "standard": self.standard
         }
 
         if self.region:
             data["region"] = self.region
-            data["is_alternate"] = True
 
         if self.mega:
             data["mega"] = self.mega
-            data["is_alternate"] = True
 
         if self.form:
             data["form"] = self.form
-            data["is_alternate"] = True
 
         if self.alternate_count > 0:
             data["alternate_count"] = self.alternate_count
