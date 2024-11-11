@@ -1,12 +1,13 @@
 import os
 
-from shared.pokedex import get_pokedex
+from pokedex.pokedex import get_pokedex
+from pokedex.pokemon import Pokemon
 
-from .scraper import create_directory, scrape_images
+from .scraper import create_directory, initialize_driver, sanitize_name, scrape_and_save_images
 
 
 # Bulbapedia archives uses more precisely written names and case-sensitive URLs
-def get_pokemon_category(pokemon_name: str, pokemon_number: str) -> str:
+def get_bulbapedia_name(pokemon_name: str, pokemon_number: str) -> str:
     if pokemon_number == "29":
         return "Nidoran♀"
     elif pokemon_number == "32":
@@ -18,37 +19,34 @@ def get_pokemon_category(pokemon_name: str, pokemon_number: str) -> str:
         return pokemon_name.replace(" ", "_")
 
 
-def scrape_pokemon_images(pokemon_name: str, pokemon_number: str, base_directory) -> None:
-    save_folder = create_directory(os.path.join(base_directory, f"{pokemon_number}_{pokemon_name.lower()}"))
+
+def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
+    name = sanitize_name(pokemon.name)
+    save_folder = create_directory(os.path.join(base_directory, f"{pokemon.number.zfill(4)}_{name}"))
 
     url_base = "https://archives.bulbagarden.net/wiki/Category:"
-    url_category = get_pokemon_category(pokemon_name, pokemon_number)
-    url = f"{url_base}{url_category}"
-    print(f"Scraping {url}")
+    url_search = get_bulbapedia_name(pokemon.name, pokemon.number)
+    url = f"{url_base}{url_search}"
 
-    scrape_images(url, save_folder, pokemon_name.lower(), "mw-gallery-traditional", False)
+    scrape_and_save_images(url=url, output_directory=save_folder, image_name=None, element_name="mw-gallery-traditional", element_by_id=False, next_text='next page', driver=driver)
 
 
 def main() -> None:
-    save_folder: str = create_directory("data/bulbapedia", True)
-    print_prefix = "[Bulbapedia]"
+    save_folder: str = create_directory("new_data/bulbapedia", True)
 
-    start_at = 0
-    pokemon_data = get_pokedex()
+    start_at = 745
+    end_at = 1030
+    pokemon_data: list[Pokemon] = get_pokedex(standardize=True, start_at=start_at, end_at=end_at)
+
+    driver = initialize_driver()
 
     for pokemon in pokemon_data:
-        pokemon_number: str = pokemon.get("number")
+        print(f"Started scraping Bulbapedia {pokemon.name} #{pokemon.number}")
+        scrape_pokemon_images(pokemon, save_folder, driver)
+        print(f"Finished scraping Bulbapedia {pokemon.name}")
 
-        if int(pokemon_number) >= start_at:
-            if pokemon.get("mega") or pokemon.get("region"):
-                print("Skipping")
-            else:
-                pokemon_name: str = pokemon.get("name")
-
-                if pokemon_name:
-                    print(f"{print_prefix} Started scraping {pokemon_name} #{pokemon_number}")
-                    scrape_pokemon_images(pokemon_name, pokemon_number, save_folder)
-                    print(f"{print_prefix} Finished scraping {pokemon_name}")
+    # Close the driver upon a successful run of the scraper
+    driver.close()
 
 
 if __name__ == "__main__":
