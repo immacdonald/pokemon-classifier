@@ -98,19 +98,16 @@ def scrape_images(url: str, element_name: str, element_by_id: bool = True, next_
                         "data": img_data
                     })
 
-            try:
-                if(next_text):
-                    next_page_link = driver.find_element(By.LINK_TEXT, next_text)
-                    if next_page_link:
-                        scrape += 1
-                        next_page_link.click()
-                    else:
-                        scrape = 0
+
+            if next_text:
+                next_page_link = driver.find_element(By.LINK_TEXT, next_text)
+                if next_page_link:
+                    scrape += 1
+                    next_page_link.click()
                 else:
                     scrape = 0
-            except:
+            else:
                 scrape = 0
-                break
 
         except:
             # Close the WebDriver

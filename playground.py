@@ -3,6 +3,7 @@ from collections import defaultdict
 from pprint import pprint
 
 from pokedex.pokedex import get_pokedex
+from pokedex.pokemon import Pokemon
 
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 
@@ -58,11 +59,26 @@ def count_images(pokemon_data):
     pprint(types)
 
 
+# Finds Pokemon that are substrings of another Pokemon
+def find_nested_names(pokedex: list[Pokemon]):    
+    nested = []
+    for i in range(len(pokedex)):
+        for j in range(len(pokedex)):
+            if i != j and pokedex[i].name.lower() in pokedex[j].name.lower():
+                if(pokedex[i].number.split("-")[0] != pokedex[j].number.split("-")[0]):
+                    nested.append(pokedex[i].name)
+                    print(f'"{pokedex[i].name}" is in "{pokedex[j].name}"')
+
+    print(f'{len(nested)} nested Pokemon')
+    return nested
+
+
 def main() -> None:
     pokedex = get_pokedex()
     print(len(pokedex), "Pokemon Total")
-    # pprint(count_types(pokedex))
-    count_images(pokedex)
+    #pprint(count_types(pokedex))
+    #count_images(pokedex)
+    find_nested_names(pokedex)
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ def get_pokedex(standardize=False, start_at=0, end_at=2000) -> list[Pokemon]:
         pokemon_list.append(
             Pokemon(
                 name=pokemon.get("name"),
-                number=pokemon.get("number"),
+                number=pokemon.get("number") if pokemon.get("standard") else pokemon.get("id"),
                 primary_type=pokemon.get("primary_type"),
                 secondary_type=pokemon.get("secondary_type"),
                 generation=pokemon.get("generation"),
