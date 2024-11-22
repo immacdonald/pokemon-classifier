@@ -44,11 +44,11 @@ def filter_pokemon(pokemon: Pokemon):
                 continue
 
             # Remove non-transparent images
-            '''if img.mode == "RGB":
+            """if img.mode == "RGB":
                 os.remove(image_path)
                 deleted_count += 1
                 continue
-            '''
+            """
 
             # Remove images with titles that suggest the Pokemon is shiny
             filename = image_file.lower().split(".")[-2]
@@ -74,6 +74,7 @@ def filter_pokemon(pokemon: Pokemon):
 
     print(f"{pokemon.name} filtered: started at {image_count} ended at {image_count - deleted_count} (deleted {deleted_count})")
 
+
 def filter_form(pokemon: Pokemon, base_form: Pokemon):
     path = f"data/bulbapedia/{get_pokemon_directory(base_form)}"
     directory = os.path.join(dir, path)
@@ -97,17 +98,17 @@ def filter_form(pokemon: Pokemon, base_form: Pokemon):
             if "mega" in filename:
                 move(image_path)
         elif pokemon.region:
-            if pokemon.region == 'Galarian':
-                if 'galar' in filename or filename.endswith('g'):
+            if pokemon.region == "Galarian":
+                if "galar" in filename or filename.endswith("g"):
                     move(image_path)
             if pokemon.region == "Alolan":
-                if 'alola' in filename or filename.endswith('a'):
+                if "alola" in filename or filename.endswith("a"):
                     move(image_path)
             if pokemon.region == "Hisuian":
-                if 'hisui' in filename or filename.endswith('h'):
+                if "hisui" in filename or filename.endswith("h"):
                     move(image_path)
             if pokemon.region == "Paldean":
-                if 'paldea' in filename or filename.endswith('p'):
+                if "paldea" in filename or filename.endswith("p"):
                     move(image_path)
 
     print(f"Moved {moved} images to form directory {form_directory}")
@@ -121,7 +122,7 @@ def main() -> None:
     base_form: Pokemon | None = None
 
     for pokemon in pokemon_data:
-        #print(get_pokemon_directory(pokemon))
+        # print(get_pokemon_directory(pokemon))
         if pokemon.standard:
             filter_pokemon(pokemon)
 
@@ -131,8 +132,6 @@ def main() -> None:
                 base_form = pokemon
         else:
             filter_form(pokemon, base_form)
-
-
 
 
 if __name__ == "__main__":

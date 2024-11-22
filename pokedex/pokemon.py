@@ -38,7 +38,7 @@ def validate_pokemon(data: list[dict]) -> list[PokemonData]:
 
         if "generation" not in pokemon or not isinstance(pokemon["generation"], str):
             raise ValueError(f"Invalid 'generation' for {name}")
-        
+
         if "standard" in pokemon and not isinstance(pokemon["standard"], bool):
             raise ValueError(f"Invalid 'standard' for {name}")
 
@@ -102,7 +102,7 @@ class Pokemon:
             "primary_type": self.primary_type,
             "secondary_type": self.secondary_type if self.secondary_type else None,
             "generation": self.generation,
-            "standard": self.standard
+            "standard": self.standard,
         }
 
         if self.region:

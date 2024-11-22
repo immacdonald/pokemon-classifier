@@ -7,7 +7,7 @@ from pokedex.pokemon import Pokemon
 def sanitize_name(name: str) -> str:
     name = name.lower()
     name = name.replace(" ", "_")
-    name = re.sub(r'[^a-z0-9_]', '', name)
+    name = re.sub(r"[^a-z0-9_]", "", name)
     return name
 
 
@@ -16,7 +16,7 @@ def get_pokemon_directory(pokemon: Pokemon):
         return f"{pokemon.number.zfill(4)}_{sanitize_name(pokemon.name)}"
     else:
         return f"{pokemon.number.zfill(6)}_{sanitize_name(pokemon.name)}"
-    
+
 
 # Creates a directory if it does not already exist
 def safe_create_directory(directory: str) -> str:

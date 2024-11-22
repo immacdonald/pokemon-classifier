@@ -3,7 +3,13 @@ import os
 from pokedex.pokedex import get_pokedex
 from pokedex.pokemon import Pokemon
 
-from .scraper import create_directory, initialize_driver, sanitize_name, scrape_and_save_images
+from .scraper import (
+    create_directory,
+    initialize_driver,
+    sanitize_name,
+    scrape_and_save_images,
+)
+
 
 def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
     name = sanitize_name(pokemon.name)
@@ -17,7 +23,7 @@ def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
 def main() -> None:
     save_folder: str = create_directory("new_data/pokemon_cards", True)
 
-    start_at = 7
+    start_at = 484
     end_at = 1030
     pokemon_data: list[Pokemon] = get_pokedex(standardize=True, start_at=start_at, end_at=end_at)
 

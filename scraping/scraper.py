@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from typing import TypedDict
 
 import requests
@@ -11,9 +12,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+
 class ScrapedImageData(TypedDict):
     name: str
     data: any
+
 
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 
@@ -32,7 +35,7 @@ def create_directory(directory: str, base=False) -> str:
 def sanitize_name(name: str) -> str:
     name = name.lower()
     name = name.replace(" ", "_")
-    name = re.sub(r'[^a-z0-9_]', '', name)
+    name = re.sub(r"[^a-z0-9_]", "", name)
     return name
 
 
@@ -48,6 +51,7 @@ def initialize_driver() -> WebDriver:
 
     return driver
 
+
 def scrape_and_save_images(url: str, output_directory: str, image_name: str | None, element_name: str, element_by_id: bool = True, next_text: str | None = None, driver: WebDriver = None) -> None:
     images: list[ScrapedImageData] = scrape_images(url, element_name, element_by_id, next_text, driver)
 
@@ -61,22 +65,25 @@ def scrape_and_save_images(url: str, output_directory: str, image_name: str | No
             file.write(image["data"])
 
 
-def scrape_images(url: str, element_name: str, element_by_id: bool = True, next_text: str | None = None, driver: WebDriver = None) -> list[ScrapedImageData]:
+def scrape_images(url: str, element_name: str, element_by_id: bool = True, next_text: str | None = None, driver: WebDriver = None) -> list[dict[str, bytes]]:
     if driver is None:
         print("Creating webdriver")
         driver: WebDriver = initialize_driver()
+        scoped_driver = True
+    else:
+        scoped_driver = False
 
     driver.get(url=url)
     element_by = By.ID if element_by_id else By.CLASS_NAME
 
-    all_images: list[ScrapedImageData] = []
-
-    # Scrape tracks the page status for paginated searches
+    all_images: list[dict[str, bytes]] = []
+    scraped_urls = set()  # Keep track of unique URLs to prevent duplicates
     scrape = 1
 
-    while scrape > 0:
+    while True:
         try:
-            print(f"Scraping {url} page {scrape}")
+            print(f"Scraping {url}, page {scrape}")
+
             # Wait for the desired div to load
             WebDriverWait(driver, 10).until(EC.presence_of_element_located((element_by, element_name)))
 
@@ -87,30 +94,45 @@ def scrape_images(url: str, element_name: str, element_by_id: bool = True, next_
             for img in images:
                 img_url = img.get_attribute("src")
 
-                if img_url:
-                    img_name = img_url.split('/')[-1]
-                    #print(f"Getting {img_name}")
-                    # Fetch the image content
-                    img_data = requests.get(img_url).content
+                if img_url and img_url not in scraped_urls:
+                    img_name = img_url.split("/")[-1]
+                    print(f"Getting {img_name} on page {scrape}")
 
-                    all_images.append({
-                        "name": img_name,
-                        "data": img_data
-                    })
+                    try:
+                        img_data = requests.get(img_url).content
+                        all_images.append({"name": img_name, "data": img_data})
+                        scraped_urls.add(img_url)  # Mark as scraped
+                    except Exception as e:
+                        print(f"Failed to download {img_url}: {e}")
 
-
+            # Check if the next page exists
             if next_text:
-                next_page_link = driver.find_element(By.LINK_TEXT, next_text)
-                if next_page_link:
-                    scrape += 1
-                    next_page_link.click()
-                else:
-                    scrape = 0
-            else:
-                scrape = 0
+                try:
+                    next_page_link = driver.find_element(By.LINK_TEXT, next_text)
 
-        except:
-            # Close the WebDriver
-            driver.quit()
-    
+                    if next_page_link:
+                        next_page_link.click()
+                        scrape += 1
+
+                        # Wait for a short period to ensure the next page loads
+                        time.sleep(2)
+
+                        # Confirm navigation by checking a new page element
+                        WebDriverWait(driver, 10).until(EC.staleness_of(content_div))  # Ensure the old content is gone
+                    else:
+                        print("No more pages found")
+                        break
+                except Exception as e:
+                    print(f"Pagination failed: {e}")
+                    break
+            else:
+                break
+
+        except Exception as e:
+            print(f"Error on page {scrape}: {e}")
+            break
+
+    if scoped_driver:
+        driver.quit()
+
     return all_images

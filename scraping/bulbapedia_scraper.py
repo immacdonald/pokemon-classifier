@@ -3,7 +3,12 @@ import os
 from pokedex.pokedex import get_pokedex
 from pokedex.pokemon import Pokemon
 
-from .scraper import create_directory, initialize_driver, sanitize_name, scrape_and_save_images
+from .scraper import (
+    create_directory,
+    initialize_driver,
+    sanitize_name,
+    scrape_and_save_images,
+)
 
 
 # Bulbapedia archives uses more precisely written names and case-sensitive URLs
@@ -19,7 +24,6 @@ def get_bulbapedia_name(pokemon_name: str, pokemon_number: str) -> str:
         return pokemon_name.replace(" ", "_")
 
 
-
 def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
     name = sanitize_name(pokemon.name)
     save_folder = create_directory(os.path.join(base_directory, f"{pokemon.number.zfill(4)}_{name}"))
@@ -28,7 +32,7 @@ def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
     url_search = get_bulbapedia_name(pokemon.name, pokemon.number)
     url = f"{url_base}{url_search}"
 
-    scrape_and_save_images(url=url, output_directory=save_folder, image_name=None, element_name="mw-gallery-traditional", element_by_id=False, next_text='next page', driver=driver)
+    scrape_and_save_images(url=url, output_directory=save_folder, image_name=None, element_name="mw-gallery-traditional", element_by_id=False, next_text="next page", driver=driver)
 
 
 def main() -> None:
