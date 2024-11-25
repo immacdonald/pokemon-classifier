@@ -60,24 +60,24 @@ def count_images(pokemon_data):
 
 
 # Finds Pokemon that are substrings of another Pokemon
-def find_nested_names(pokedex: list[Pokemon]):    
+def find_nested_names(pokedex: list[Pokemon]):
     nested = []
     for i in range(len(pokedex)):
         for j in range(len(pokedex)):
             if i != j and pokedex[i].name.lower() in pokedex[j].name.lower():
-                if(pokedex[i].number.split("-")[0] != pokedex[j].number.split("-")[0]):
+                if pokedex[i].number.split("-")[0] != pokedex[j].number.split("-")[0]:
                     nested.append(pokedex[i].name)
-                    print(f'"{pokedex[i].name}" is in "{pokedex[j].name}"')
+                    print(f'{pokedex[i].number} "{pokedex[i].name}" is in "{pokedex[j].name}"')
 
-    print(f'{len(nested)} nested Pokemon')
+    print(f"{len(nested)} nested Pokemon")
     return nested
 
 
 def main() -> None:
     pokedex = get_pokedex()
     print(len(pokedex), "Pokemon Total")
-    #pprint(count_types(pokedex))
-    #count_images(pokedex)
+    # pprint(count_types(pokedex))
+    # count_images(pokedex)
     find_nested_names(pokedex)
 
 
