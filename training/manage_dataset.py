@@ -1,22 +1,23 @@
 import os
 import shutil
 
-from shared.pokedex import get_pokedex, get_types
+from pokedex.pokedex import get_pokedex, get_types
+from pokedex.pokemon import Pokemon
+from utility import get_pokemon_directory, sanitize_name
 
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 
 
-def add_to_dataset(basepath, directories, pokemon, file_suffix=""):
-    pokemon_number = pokemon.get("number").lower()
-    pokemon_name = pokemon.get("name").lower()
-    pokemon_type = pokemon.get("primary_type").lower()
-    pokemon_type_secondary = pokemon.get("secondary_type").lower() if pokemon.get("secondary_type") else None
+def add_to_dataset(basepath: str, directories: dict[str, str], pokemon: Pokemon, file_suffix: str ="") -> None:
+    pokemon_name = sanitize_name(pokemon.name)
+    pokemon_type = pokemon.primary_type.lower()
+    pokemon_type_secondary = pokemon.secondary_type.lower() if pokemon.secondary_type else None
 
     # Set primary type to "flying" if primary is "normal" and secondary is "flying"
     if pokemon_type == "normal" and pokemon_type_secondary == "flying":
         pokemon_type = pokemon_type_secondary
 
-    image_directory = os.path.join(basepath, f"{pokemon_number}_{pokemon_name}")
+    image_directory = os.path.join(basepath, get_pokemon_directory(pokemon))
     image_files = [file for file in os.listdir(image_directory) if file.lower().endswith((".png", ".jpg", ".jpeg"))]
 
     # Get the target directory for the primary type
@@ -26,8 +27,8 @@ def add_to_dataset(basepath, directories, pokemon, file_suffix=""):
         return
 
     # Copy each image to the target directory with the new naming format
-    for idx, file in enumerate(image_files, start=1):
-        new_filename = f"{pokemon_name}{file_suffix}_{idx}{os.path.splitext(file)[1]}"
+    for index, file in enumerate(image_files, start=1):
+        new_filename = f"{pokemon_name}{file_suffix}_{index}{os.path.splitext(file)[1]}"
         source_path = os.path.join(image_directory, file)
         destination_path = os.path.join(target_directory, new_filename)
 
@@ -40,7 +41,7 @@ def add_to_dataset(basepath, directories, pokemon, file_suffix=""):
 
 # Create directories for each type
 def create_type_directories():
-    type_directories = {}
+    type_directories: dict[str, str] = {}
 
     for type in get_types():
         directory_path: str = os.path.join(dir, f"dataset/{type}")
@@ -55,19 +56,19 @@ def create_type_directories():
 
 
 def main() -> None:
-    start_at = 0
-    end_at = 1026
-    pokemon_data = get_pokedex(True)
+    pokemon_data = get_pokedex()
 
     directories = create_type_directories()
 
-    basepath = os.path.join(os.path.abspath(os.path.join(dir, "..")), "scraping/data")
+    use_images = True
+    use_cards = True
+    
+    basepath = os.path.join(os.path.abspath(os.path.join(dir, "..")), "filtering/data")
 
     for pokemon in pokemon_data:
-        pokemon_number: int = int(pokemon.get("number"))
-
-        if pokemon_number >= start_at and pokemon_number <= end_at:
+        if use_images:
             add_to_dataset(os.path.join(basepath, "bulbapedia"), directories, pokemon)
+        if use_cards:
             add_to_dataset(os.path.join(basepath, "pokemon_cards"), directories, pokemon, file_suffix="_card")
 
 
