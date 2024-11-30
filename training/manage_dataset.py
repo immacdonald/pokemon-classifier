@@ -8,7 +8,7 @@ from utility import get_pokemon_directory, sanitize_name
 dir: str = os.path.dirname(p=os.path.realpath(filename=__file__))
 
 
-def add_to_dataset(basepath: str, directories: dict[str, str], pokemon: Pokemon, file_suffix: str ="") -> None:
+def add_to_dataset(basepath: str, directories: dict[str, str], pokemon: Pokemon, file_suffix: str = "") -> None:
     pokemon_name = sanitize_name(pokemon.name)
     pokemon_type = pokemon.primary_type.lower()
     pokemon_type_secondary = pokemon.secondary_type.lower() if pokemon.secondary_type else None
@@ -62,7 +62,7 @@ def main() -> None:
 
     use_images = True
     use_cards = True
-    
+
     basepath = os.path.join(os.path.abspath(os.path.join(dir, "..")), "filtering/data")
 
     for pokemon in pokemon_data:

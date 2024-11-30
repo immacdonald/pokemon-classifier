@@ -86,7 +86,7 @@ def check_against_exclusions(pokemon: Pokemon):
     deleted_count = 0
 
     for file in image_files:
-        if pokemon.number is "6":
+        if pokemon.number == "6":
             print(image_files)
         if file.lower() in exclusion_files:
             print(file)

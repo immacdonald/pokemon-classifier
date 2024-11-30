@@ -6,21 +6,26 @@ from collections import defaultdict
 from datetime import datetime
 from time import time
 
-from PIL import Image
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from PIL import Image
 from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, models, transforms
-from torchvision.models import ResNet50_Weights
-from torchvision.models import densenet121, DenseNet121_Weights
-from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
+from torchvision.models import (
+    DenseNet121_Weights,
+    EfficientNet_B0_Weights,
+    ResNet50_Weights,
+    densenet121,
+    efficientnet_b0,
+)
 
 dir = os.path.dirname(__file__)
 
 debug = False
 run_path: str
+
 
 def format_time(elapsed):
     return f"{int(elapsed // 3600):02}:{int((elapsed % 3600) // 60):02}:{int(elapsed % 60):02}"
@@ -39,7 +44,6 @@ def log_internal(*args, **kwargs):
 
     if debug:
         print(*args, **kwargs)
-
 
 
 def configure_device() -> torch.device:
@@ -85,7 +89,7 @@ def stratified_split(dataset, train_ratio, val_ratio, test_ratio, seed):
 
     if n_train + n_val + n_test != total_species:
         pass
-        #log("Training, validation, and testing sets do not add to 100%", n_train, "+", n_val, "+", n_test, "=", n_train + n_val + n_test, "!=", total_species)
+        # log("Training, validation, and testing sets do not add to 100%", n_train, "+", n_val, "+", n_test, "=", n_train + n_val + n_test, "!=", total_species)
 
     # Assign species to each split
     train_species = all_species[:n_train]
@@ -105,7 +109,7 @@ def stratified_split(dataset, train_ratio, val_ratio, test_ratio, seed):
 
     # Print dataset distribution summary
     log_summary = False
-    
+
     if log_summary:
         log_internal("\nDataset Split Summary:")
         for split_name, split_data in dataset_split_summary.items():
@@ -118,8 +122,39 @@ def stratified_split(dataset, train_ratio, val_ratio, test_ratio, seed):
     return Subset(dataset, train_indices), Subset(dataset, val_indices), Subset(dataset, test_indices)
 
 
+def random_split(dataset, train_ratio, val_ratio, test_ratio, seed):
+    random.seed(seed)
+    indices = list(range(len(dataset)))
+    random.shuffle(indices)
+
+    # Calculate split sizes
+    n_train = int(len(indices) * train_ratio)
+    n_val = int(len(indices) * val_ratio)
+    n_test = len(indices) - n_train - n_val
+
+    if n_train + n_val + n_test != len(indices):
+        pass
+
+    train_indices = indices[:n_train]
+    val_indices = indices[n_train : n_train + n_val]
+    test_indices = indices[n_train + n_val :]
+
+    log_summary = False
+    if log_summary:
+        dataset_split_summary = {
+            "train": len(train_indices),
+            "val": len(val_indices),
+            "test": len(test_indices),
+        }
+        log_internal("\nDataset Split Summary:")
+        for split_name, count in dataset_split_summary.items():
+            log_internal(f"{split_name.capitalize()} Set: {count} images")
+
+    return Subset(dataset, train_indices), Subset(dataset, val_indices), Subset(dataset, test_indices)
+
+
 def rgba_to_rgb(image):
-    if image.mode == 'RGBA':
+    if image.mode == "RGBA":
         # Replace transparent areas with a white background
         background = Image.new("RGB", image.size, (255, 255, 255))
         background.paste(image, mask=image.split()[3])  # Use alpha channel as mask
@@ -128,7 +163,7 @@ def rgba_to_rgb(image):
         return image
 
 
-def load_datasets(data_dir, batch_size, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1):
+def load_datasets(data_dir, batch_size, method: str, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1):
     # Define transforms for training with augmentation, and for validation/test without augmentation
     train_transforms = transforms.Compose(
         [
@@ -138,24 +173,23 @@ def load_datasets(data_dir, batch_size, train_ratio=0.8, val_ratio=0.1, test_rat
             transforms.RandomHorizontalFlip(),  # Flip images horizontally
             transforms.RandomRotation(15),  # Rotate images randomly by up to 15 degrees
             transforms.ToTensor(),
-            transforms.Normalize([0.4205, 0.4105, 0.3797], [0.2740, 0.2510, 0.2439])
+            transforms.Normalize([0.4205, 0.4105, 0.3797], [0.2740, 0.2510, 0.2439]),
         ]
     )
 
     val_test_transforms = transforms.Compose(
-        [
-            transforms.Lambda(rgba_to_rgb),
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.4205, 0.4105, 0.3797], [0.2740, 0.2510, 0.2439])
-        ]
+        [transforms.Lambda(rgba_to_rgb), transforms.Resize((224, 224)), transforms.ToTensor(), transforms.Normalize([0.4205, 0.4105, 0.3797], [0.2740, 0.2510, 0.2439])]
     )
 
     # Load the full dataset using ImageFolder and apply val/test transforms
     full_dataset = datasets.ImageFolder(root=data_dir, transform=val_test_transforms)
 
-    # Stratified split with no Pokémon overlapping across train, val, and test sets
-    train_set, val_set, test_set = stratified_split(full_dataset, train_ratio, val_ratio, test_ratio, 0)
+    seed = 0
+    if method == "stratified":
+        # Stratified split with no Pokémon overlapping across train, val, and test sets
+        train_set, val_set, test_set = stratified_split(full_dataset, train_ratio, val_ratio, test_ratio, seed)
+    elif method == "random":
+        train_set, val_set, test_set = random_split(full_dataset, train_ratio, val_ratio, test_ratio, seed)
 
     # Apply training transforms to the training set only
     train_set.dataset.transform = train_transforms
@@ -169,6 +203,11 @@ def load_datasets(data_dir, batch_size, train_ratio=0.8, val_ratio=0.1, test_rat
 
 
 def train_model(model, device, train_loader, val_loader, num_epochs, criterion, optimizer, scheduler, save_path):
+    best_val_loss = 100
+    # Number of epochs to wait before stopping
+    patience = num_epochs
+    no_improve_epochs = 0
+
     for epoch in range(1, num_epochs + 1):
         start_time = time()
         epoch_start = datetime.now().strftime("%I:%M %p")
@@ -187,6 +226,12 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
         avg_train_loss = running_loss / len(train_loader)
         val_loss, accuracy = validate_model(model, device, val_loader, criterion)
 
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            no_improve_epochs = 0
+        else:
+            no_improve_epochs += 1
+
         epoch_end = datetime.now().strftime("%I:%M %p")
 
         log(
@@ -199,7 +244,7 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
 
         log_internal(f"Started at {epoch_start}, ended at {epoch_end}\n")
 
-        scheduler.step()
+        scheduler.step(val_loss)
 
         # Save checkpoint for resuming
         torch.save(
@@ -211,6 +256,11 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
             },
             os.path.join(save_path, f"checkpoint_{epoch}.pth"),
         )
+
+        if no_improve_epochs >= patience:
+            log(f"Model has not improved in {patience} epochs, stopping training early at {epoch} epochs")
+            break
+
 
 def validate_model(model, device, val_loader, criterion):
     model.eval()
@@ -239,9 +289,32 @@ def test_model(model, device, test_loader):
     log(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 
 
+def create_model(architecture: str, types: int, dropout: int):
+    match architecture:
+        case "resnet":
+            log_internal("Creating ResNet model")
+            model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+            model.fc = nn.Sequential(nn.Dropout(p=dropout), nn.Linear(in_features=model.fc.in_features, out_features=types))
+            return model
+        case "densenet":
+            log_internal("Creating DenseNet model")
+            model = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
+            model.classifier = nn.Sequential(nn.Dropout(p=dropout), nn.Linear(in_features=model.classifier.in_features, out_features=types))
+            return model
+        case "efficientnet":
+            log_internal("Creating EfficientNet model")
+            model = efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
+            in_features = model.classifier[1].in_features
+            model.classifier = nn.Sequential(nn.Dropout(p=dropout), nn.Linear(in_features=in_features, out_features=types))
+            return model
+        case _:
+            log(f"Invalid model architecture provided: {architecture}")
+            return None
+
+
 def main():
     models_dir = os.path.join(dir, "models")
-    existing_runs = [int(folder.split('_')[-1]) for folder in os.listdir(models_dir) if folder.startswith("run_") and folder.split('_')[-1].isdigit()]
+    existing_runs = [int(folder.split("_")[-1]) for folder in os.listdir(models_dir) if folder.startswith("run_") and folder.split("_")[-1].isdigit()]
     next_run_number = max(existing_runs) + 1 if existing_runs else 1
 
     # Set run directory and initialize logfile
@@ -250,54 +323,46 @@ def main():
     global run_path
     run_path = save_path
 
-    with open(os.path.join(run_path, "logs.txt"), "w") as f:
+    with open(os.path.join(run_path, "logs.txt"), "w") as file:
         pass
 
     start_time = datetime.now().strftime("%I:%M %p")
     log_internal(f"Initializing training at {start_time}...")
 
+    number_of_types = 18
     # Hyperparameters
     num_epochs = 32
+
     batch_size = 32
     learning_rate = 0.0001
-    num_types = 18
+    dropout = 0.6
+    weight_decay = 0.001
+
     train_ratio = 0.7
     val_ratio = 0.15
     test_ratio = 0.15
+    split_method = "random"  # "stratified"
+
     device = configure_device()
 
-    log(f"Hyperparameters:\nEpochs: {num_epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}\nTraining: {train_ratio}, Validation: {val_ratio}, Testing: {test_ratio}\n")
+    log(
+        "Hyperparameters",
+        f"Epochs: {num_epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}\nDropout: {dropout}\nWeight Decay: {weight_decay}",
+        f"Dataset Split Method: {split_method}\nTraining: {train_ratio}, Validation: {val_ratio}, Testing: {test_ratio}\n",
+    )
 
     data_dir = os.path.join(dir, "dataset")
 
-    train_loader, val_loader, test_loader, train_set, val_set, test_set = load_datasets(data_dir, batch_size, train_ratio, val_ratio, test_ratio)
+    train_loader, val_loader, test_loader, train_set, val_set, test_set = load_datasets(data_dir, batch_size, split_method, train_ratio, val_ratio, test_ratio)
     log_internal("Loaded datasets\n")
 
-    model = densenet121(weights=DenseNet121_Weights.IMAGENET1K_V1)
-    log_internal("Creating DenseNet model")
-
-    num_features = model.classifier.in_features
-    model.classifier = nn.Sequential(
-        nn.Dropout(p=0.5),
-        nn.Linear(in_features=num_features, out_features=num_types)
-    )
-
-    #model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-    #log_internal("Creating ResNet model")
-    #model = efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
-    #log_internal("Creating EfficientNet model")
-    '''model.fc = nn.Sequential(
-        nn.Dropout(p=0.5),
-        nn.Linear(in_features=model.fc.in_features, out_features=num_types)
-    )'''
+    model = create_model("resnet", number_of_types, dropout)
     model = model.to(device)
 
-    #for layer in model.layers:
-    #    layer.trainable=True
-
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=3, factor=0.1, verbose=True)
     log_internal("Set model parameters\n")
 
     def signal_handler(sig, frame):

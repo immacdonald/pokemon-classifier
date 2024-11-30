@@ -78,7 +78,7 @@ def filter_pokemon(pokemon: Pokemon):
                         os.remove(image_path)
                     deleted_count += 1
                     continue
-        
+
         # Check image name to remove unwanted names
         for exclusion in exclusion_terms:
             if exclusion in image_file.lower() and exclusion not in pokemon.name.lower():
