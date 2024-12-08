@@ -21,7 +21,7 @@ def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
 
 
 def main() -> None:
-    save_folder: str = create_directory("new_data/pokemon_cards", True)
+    save_folder: str = create_directory("data/pokemon_cards", True)
 
     start_at = 484
     end_at = 1030

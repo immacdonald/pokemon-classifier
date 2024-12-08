@@ -36,7 +36,7 @@ def scrape_pokemon_images(pokemon: Pokemon, base_directory, driver) -> None:
 
 
 def main() -> None:
-    save_folder: str = create_directory("new_data/bulbapedia", True)
+    save_folder: str = create_directory("data/bulbapedia", True)
 
     start_at = 745
     end_at = 1030

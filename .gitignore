@@ -80,5 +80,6 @@ venv.bak/
 # Project
 **/scraping/*/
 **/training/dataset
+**/training/multidataset
 **/training/models
 **/filtering/*/

@@ -10,9 +10,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from PIL import Image
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 from torch.utils.data import DataLoader, Subset
-from torchvision import datasets, models, transforms
+from torchvision import models, transforms
 from torchvision.models import (
     DenseNet121_Weights,
     EfficientNet_B0_Weights,
@@ -21,10 +21,18 @@ from torchvision.models import (
     efficientnet_b0,
 )
 
+from pokedex.pokedex import get_types
+from training.ImageFolderWithFilenames import ImageFolderWithFilenames
+from training.MultiClassDataset import MultiClassDataset
+
 dir = os.path.dirname(__file__)
 
 debug = False
 run_path: str
+
+multiclass = False
+
+torch.manual_seed(42)
 
 
 def format_time(elapsed):
@@ -57,67 +65,58 @@ def configure_device() -> torch.device:
 
 
 def stratified_split(dataset, train_ratio, val_ratio, test_ratio, seed):
-    # Map of class indices to type names
-    idx_to_class = {v: k for k, v in dataset.class_to_idx.items()}
-
-    # Dictionary to group images by Pokémon species and track type names
     species_to_indices = defaultdict(list)
-    species_to_type = {}  # Map each species to its type name
+    species_to_types = {}  # Track type names for each species
 
-    # Group image indices by Pokémon species name
-    for idx, (path, label) in enumerate(dataset.imgs):
-        pokemon_name = os.path.basename(path).split("_")[0]  # Assumes species name is before the first underscore
-        species_to_indices[pokemon_name].append(idx)
-        species_to_type[pokemon_name] = idx_to_class[label]  # Assigns type name to species
+    if not multiclass:
+        for idx, (path, label) in enumerate(dataset.imgs):
+            pokemon_name = os.path.basename(path).split("-")[0]
+            species_to_indices[pokemon_name].append(idx)
+            species_to_types[pokemon_name] = dataset.classes[label]
+    else:
+        for idx, image_path in enumerate(dataset.image_paths):
+            species_name = os.path.basename(image_path).split("-")[0]
+            species_to_indices[species_name].append(idx)
+            # Replace the next line with the appropriate method for multiclass type assignment
+            species_to_types[species_name] = "Type Placeholder"
 
-    # Lists for indices of each dataset split
-    train_indices, val_indices, test_indices = [], [], []
-
-    # Prepare a summary dictionary to print dataset distribution
-    dataset_split_summary = {"train": defaultdict(list), "val": defaultdict(list), "test": defaultdict(list)}
-
-    # Shuffle the species list for randomness in distribution
     all_species = list(species_to_indices.keys())
     random.seed(seed)
     random.shuffle(all_species)
 
-    # Calculate split sizes based on the species count
     total_species = len(all_species)
     n_train = int(total_species * train_ratio)
     n_val = int(total_species * val_ratio)
-    n_test = int(total_species * test_ratio)
+    n_test = total_species - n_train - n_val
 
-    if n_train + n_val + n_test != total_species:
-        pass
-        # log("Training, validation, and testing sets do not add to 100%", n_train, "+", n_val, "+", n_test, "=", n_train + n_val + n_test, "!=", total_species)
+    log_internal(f"Split is training: {n_train}, validation: {n_val}, test: {n_test}")
 
-    # Assign species to each split
     train_species = all_species[:n_train]
     val_species = all_species[n_train : n_train + n_val]
     test_species = all_species[n_train + n_val :]
 
-    # Add indices to each split based on species assignment
+    train_indices, val_indices, test_indices = [], [], []
     for species in train_species:
         train_indices.extend(species_to_indices[species])
-        dataset_split_summary["train"][species_to_type[species]].append(species)
     for species in val_species:
         val_indices.extend(species_to_indices[species])
-        dataset_split_summary["val"][species_to_type[species]].append(species)
     for species in test_species:
         test_indices.extend(species_to_indices[species])
-        dataset_split_summary["test"][species_to_type[species]].append(species)
 
-    # Print dataset distribution summary
-    log_summary = False
+    # Helper function to summarize data
+    def summarize_split(split_species, name):
+        type_counts = defaultdict(int)
+        for species in split_species:
+            type_counts[species_to_types[species]] += len(species_to_indices[species])
+        print(f"\n{name} Split:")
+        print(f"  Species: {', '.join(split_species)}")
+        for poke_type, count in type_counts.items():
+            print(f"  {poke_type}: {count} Pokémon")
 
-    if log_summary:
-        log_internal("\nDataset Split Summary:")
-        for split_name, split_data in dataset_split_summary.items():
-            total_images = sum(len(species_to_indices[species]) for species_list in split_data.values() for species in species_list)
-            log_internal(f"\n{split_name.capitalize()} Set: {total_images} total images")
-            for pokemon_type, species_list in split_data.items():
-                type_image_count = sum(len(species_to_indices[species]) for species in species_list)
-                log_internal(f"Type {pokemon_type}: {type_image_count} images, {len(species_list)} Pokémon ({', '.join(species_list)})")
+    # Summarize each split
+    summarize_split(train_species, "Training")
+    summarize_split(val_species, "Validation")
+    summarize_split(test_species, "Testing")
 
     return Subset(dataset, train_indices), Subset(dataset, val_indices), Subset(dataset, test_indices)
 
@@ -168,10 +167,11 @@ def load_datasets(data_dir, batch_size, method: str, train_ratio=0.8, val_ratio=
     train_transforms = transforms.Compose(
         [
             transforms.Lambda(rgba_to_rgb),
-            transforms.RandomResizedCrop(224, scale=(0.9, 1.0)),  # Randomly crop and resize to simulate zoom
-            transforms.ColorJitter(brightness=0.2, contrast=0.1, saturation=0.1, hue=0.05),
-            transforms.RandomHorizontalFlip(),  # Flip images horizontally
-            transforms.RandomRotation(15),  # Rotate images randomly by up to 15 degrees
+            transforms.Resize((224, 224)),
+            # transforms.RandomResizedCrop(224, scale=(0.9, 1.0)),
+            transforms.ColorJitter(brightness=0.1, contrast=0.05, saturation=0.02),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(10),
             transforms.ToTensor(),
             transforms.Normalize([0.4205, 0.4105, 0.3797], [0.2740, 0.2510, 0.2439]),
         ]
@@ -182,7 +182,10 @@ def load_datasets(data_dir, batch_size, method: str, train_ratio=0.8, val_ratio=
     )
 
     # Load the full dataset using ImageFolder and apply val/test transforms
-    full_dataset = datasets.ImageFolder(root=data_dir, transform=val_test_transforms)
+    if multiclass:
+        full_dataset = MultiClassDataset(root=data_dir, transform=val_test_transforms)
+    else:
+        full_dataset = ImageFolderWithFilenames(root=data_dir, transform=val_test_transforms)
 
     seed = 0
     if method == "stratified":
@@ -202,10 +205,8 @@ def load_datasets(data_dir, batch_size, method: str, train_ratio=0.8, val_ratio=
     return train_loader, val_loader, test_loader, train_set, val_set, test_set
 
 
-def train_model(model, device, train_loader, val_loader, num_epochs, criterion, optimizer, scheduler, save_path):
-    best_val_loss = 100
-    # Number of epochs to wait before stopping
-    patience = num_epochs
+def train_model(model, device, train_loader, val_loader, num_epochs, criterion, optimizer, scheduler, training_patience, save_path):
+    best_loss = 100
     no_improve_epochs = 0
 
     for epoch in range(1, num_epochs + 1):
@@ -214,7 +215,7 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
 
         model.train()
         running_loss = 0.0
-        for images, labels in train_loader:
+        for images, labels, _ in train_loader:
             images, labels = images.to(device, non_blocking=True), labels.to(device, non_blocking=True)
             optimizer.zero_grad()
             outputs = model(images)
@@ -226,9 +227,20 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
         avg_train_loss = running_loss / len(train_loader)
         val_loss, accuracy = validate_model(model, device, val_loader, criterion)
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_loss < best_loss:
+            best_loss = val_loss
             no_improve_epochs = 0
+
+            # Only save checkpoint when a new best validation loss is achieved
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "loss": loss,
+                },
+                os.path.join(save_path, f"checkpoint_{epoch}.pth"),
+            )
         else:
             no_improve_epochs += 1
 
@@ -246,53 +258,153 @@ def train_model(model, device, train_loader, val_loader, num_epochs, criterion, 
 
         scheduler.step(val_loss)
 
-        # Save checkpoint for resuming
-        torch.save(
-            {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "loss": loss,
-            },
-            os.path.join(save_path, f"checkpoint_{epoch}.pth"),
-        )
-
-        if no_improve_epochs >= patience:
-            log(f"Model has not improved in {patience} epochs, stopping training early at {epoch} epochs")
+        if no_improve_epochs >= training_patience:
+            log(f"Model has not improved in {no_improve_epochs} epochs, stopping training early at {epoch} epochs")
             break
+
+
+def create_type_index_map():
+    # Correct order of types
+    proper_order = get_types()
+
+    # Alphabetical order of types (used by the model)
+    alphabetical_order = sorted(proper_order)
+
+    # Create a map from alphabetical index to proper index
+    index_map = {alphabetical_order.index(type_name): proper_order.index(type_name) for type_name in proper_order}
+    return index_map
+
+
+def print_confusion_matrix(predictions, targets):
+    """
+    Print the confusion matrix and per-class accuracy.
+
+    Args:
+        predictions: Tensor of predicted labels.
+        targets: Tensor of ground truth labels.
+        class_names: List of class names (e.g., Pokémon types).
+    """
+    types = get_types()
+    index_map = create_type_index_map()
+    class_names = [types[index_map[i]] for i in range(18)]
+
+    cm = confusion_matrix(targets, predictions)
+    accuracy_per_class = cm.diagonal() / cm.sum(axis=1)
+
+    # print("\nConfusion Matrix:")
+    # print(cm)
+
+    log("\nPer-Class Accuracy:")
+    for i, class_name in enumerate(class_names):
+        log(f"{class_name}: {accuracy_per_class[i]:.2f}")
 
 
 def validate_model(model, device, val_loader, criterion):
     model.eval()
     val_loss = 0.0
-    all_labels, all_preds = [], []
+
+    all_labels, all_preds, all_files = [], [], []
 
     with torch.no_grad():
-        for images, labels in val_loader:
+        for images, labels, filenames in val_loader:
             images, labels = images.to(device, non_blocking=True), labels.to(device, non_blocking=True)
             outputs = model(images)
             loss = criterion(outputs, labels)
             val_loss += loss.item()
 
-            _, preds = torch.max(outputs, 1)
+            if multiclass:
+                # Apply sigmoid to get probabilities
+                probs = torch.sigmoid(outputs)
+
+                # Get top two predictions
+                top_probs, top_indices = torch.topk(probs, 2, dim=1)
+
+                # Dynamic thresholding
+                preds = torch.zeros_like(probs, dtype=torch.bool)
+                for i in range(probs.size(0)):  # Iterate over batch
+                    # Always include top prediction
+                    preds[i, top_indices[i, 0]] = True
+
+                    # Include second prediction if:
+                    # 1. Second probability is reasonably close to the first
+                    # 2. Second probability exceeds a minimum absolute threshold
+                    if top_probs[i, 1] >= 0.5 * top_probs[i, 0] and top_probs[i, 1] >= 0.3:  # Relative confidence (50% of top)  # Absolute threshold (adjustable)
+                        preds[i, top_indices[i, 1]] = True
+            else:
+                _, preds = torch.max(outputs, 1)
+
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(preds.cpu().numpy())
+            all_files.extend(filenames)
+
+    # Evaluate predictions image-by-image to inspect accuracy
+    """
+    types_list = get_types()
+    type_map = create_type_index_map()
+
+    for filename, prediction, truth in zip(all_files, all_preds, all_labels):
+        if multiclass:
+            # Decode multi-label predictions
+            predicted_types = [types_list[i] for i in range(len(prediction)) if prediction[i] == 1]
+            ground_truth_types = [types_list[i] for i in range(len(truth)) if truth[i] == 1]
+
+            log(f"Image: {filename}")
+            log(f"Predicted Types: {predicted_types}")
+            log(f"Ground Truth Types: {ground_truth_types}\n")
+        else:
+            # Decode single-label predictions
+            predicted_types = [types_list[type_map[int(prediction)]]]  # Single prediction index
+            ground_truth_types = [types_list[type_map[int(truth)]]]  # Single ground truth index
+
+            log(f"Image: {filename} {prediction}")
+            log(f"Predicted Types: {predicted_types}")
+            log(f"Ground Truth Types: {ground_truth_types}\n")
+    """
 
     avg_val_loss = val_loss / len(val_loader)
-    accuracy = accuracy_score(all_labels, all_preds)
+    accuracy = accuracy_score(all_labels, all_preds) if not multiclass else multi_label_accuracy(all_labels, all_preds)
+
+    # print_confusion_matrix(np.concatenate(all_preds), np.concatenate(all_labels))
+
     return avg_val_loss, accuracy
 
 
-def test_model(model, device, test_loader):
+def multi_label_accuracy(y_true, y_pred):
+    """
+    Compute accuracy for multi-label predictions.
+
+    Args:
+        y_true: Ground truth labels (2D list or tensor of binary vectors).
+        y_pred: Predicted labels (2D list or tensor of binary vectors).
+
+    Returns:
+        Accuracy: Average match score between ground truth and predictions.
+    """
+    y_true = torch.tensor(y_true)
+    y_pred = torch.tensor(y_pred)
+
+    # Compute intersection (correct predictions)
+    intersection = (y_true * y_pred).sum(dim=1).float()
+
+    # Compute union (total unique labels across ground truth and prediction)
+    union = (y_true + y_pred).clamp(0, 1).sum(dim=1).float()
+
+    # Accuracy is the proportion of correct labels in the union
+    accuracy_per_sample = intersection / union
+
+    # Average accuracy across all samples
+    return accuracy_per_sample.mean().item()
+
+
+def test_model(model, device, test_loader, criterion):
     log("Evaluating model on test set")
-    test_loss, test_accuracy = validate_model(model, device, test_loader, criterion=nn.CrossEntropyLoss())
+    test_loss, test_accuracy = validate_model(model, device, test_loader, criterion=criterion)
     log(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
 
 
-def create_model(architecture: str, types: int, dropout: int):
+def create_model(architecture: str, types: int, dropout: int, unfreeze_layers: int = 3):
     match architecture:
         case "resnet":
-            log_internal("Creating ResNet model")
             model = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
             model.fc = nn.Sequential(nn.Dropout(p=dropout), nn.Linear(in_features=model.fc.in_features, out_features=types))
             return model
@@ -323,45 +435,54 @@ def main():
     global run_path
     run_path = save_path
 
-    with open(os.path.join(run_path, "logs.txt"), "w") as file:
+    with open(os.path.join(run_path, "logs.txt"), "w"):
         pass
 
     start_time = datetime.now().strftime("%I:%M %p")
     log_internal(f"Initializing training at {start_time}...")
 
-    number_of_types = 18
+    number_of_types = len(get_types())
     # Hyperparameters
+    model_architecture = "resnet"  # "resnet" or "densenet" or "efficientnet"
     num_epochs = 32
 
-    batch_size = 32
+    batch_size = 64
     learning_rate = 0.0001
-    dropout = 0.6
+    dropout = 0.5
     weight_decay = 0.001
+    training_patience = 5
 
     train_ratio = 0.7
     val_ratio = 0.15
     test_ratio = 0.15
-    split_method = "random"  # "stratified"
+    split_method = "random"  # "stratified" or "random"
 
     device = configure_device()
 
     log(
-        "Hyperparameters",
-        f"Epochs: {num_epochs}\nBatch Size: {batch_size}\nLearning Rate: {learning_rate}\nDropout: {dropout}\nWeight Decay: {weight_decay}",
-        f"Dataset Split Method: {split_method}\nTraining: {train_ratio}, Validation: {val_ratio}, Testing: {test_ratio}\n",
+        "Configuration\n",
+        f"Multiclass: {multiclass}\n",
+        f"Model Architecture: {model_architecture}\n",
+        "Hyperparameters\n",
+        f"Epochs: {num_epochs}\n",
+        f"Batch Size: {batch_size}\n",
+        f"Learning Rate: {learning_rate}\n",
+        f"Dropout: {dropout}\n",
+        f"Weight Decay: {weight_decay}\n",
+        f"Dataset Split Method: {split_method}\n",
+        f"Training: {train_ratio}, Validation: {val_ratio}, Testing: {test_ratio}\n",
     )
 
-    data_dir = os.path.join(dir, "dataset")
+    data_dir = os.path.join(dir, "dataset" if not multiclass else "multidataset")
 
     train_loader, val_loader, test_loader, train_set, val_set, test_set = load_datasets(data_dir, batch_size, split_method, train_ratio, val_ratio, test_ratio)
     log_internal("Loaded datasets\n")
 
-    model = create_model("resnet", number_of_types, dropout)
+    model = create_model(model_architecture, number_of_types, dropout)
     model = model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss() if not multiclass else nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", patience=3, factor=0.1, verbose=True)
     log_internal("Set model parameters\n")
 
@@ -372,7 +493,7 @@ def main():
             log_internal("Found saved model to test")
             checkpoint = torch.load(os.path.join(save_path, checkpoint_files[0]), weights_only=True)
             model.load_state_dict(checkpoint["model_state_dict"])
-            test_model(model, device, test_loader)
+            test_model(model, device, test_loader, criterion)
         else:
             log("Found no saved models to test, exiting program")
         sys.exit(0)
@@ -380,10 +501,10 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     log("Starting training\n")
-    train_model(model, device, train_loader, val_loader, num_epochs, criterion, optimizer, scheduler, save_path)
+    train_model(model, device, train_loader, val_loader, num_epochs, criterion, optimizer, scheduler, training_patience, save_path)
 
     log("Training complete. Testing on final model.")
-    test_model(model, device, test_loader)
+    test_model(model, device, test_loader, criterion)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ def count_images(pokemon_data: list[Pokemon]):
     images = sprite_images + card_images
     print(f"Dataset contains {sprite_images} sprites and {card_images} cards for {images} total")
     types = dict(types)
-    pprint(types)
+    # pprint(types)
 
 
 # Finds Pokemon that are substrings of another Pokemon
@@ -73,7 +73,7 @@ def find_nested_names(pokedex: list[Pokemon]):
 def main() -> None:
     pokedex = get_pokedex()
     print(len(pokedex), "Pokemon Total")
-    # pprint(count_types(pokedex))
+    pprint(count_types(pokedex))
     count_images(pokedex)
     # find_nested_names(pokedex)
 

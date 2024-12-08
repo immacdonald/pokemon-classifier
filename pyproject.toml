@@ -7,7 +7,8 @@ exclude = [
     ".gitignore",
     "__pycache__",
     "venv",
-    ".env"
+    ".env",
+    "*.pth"
 ]
 max-line-length = 200
 extend-ignore = [
